@@ -1,7 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 const joi = require("joi");
-const expressJoi = require("@escook/express-joi");
+const config = require("./config");
+const userRouter = require("./router/user");
+
+// 解析 token 的中间件
+const expressJWT = require("express-jwt");
 
 const app = express();
 app.use(cors());
@@ -21,16 +25,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// 使用 .unless({ path: [/^\/api\//] }) 指定哪些接口不需要进行 Token 的身份认证
+app.use(
+  expressJWT({ secret: config.jwtSecretKey }).unless({ path: [/^\/api\//] })
+);
+
+app.use("/api", userRouter);
+
 // 错误中间件
 app.use(function (err, req, res, next) {
   // 数据验证失败
   if (err instanceof joi.ValidationError) return res.customSend(err);
+  if (err.name === "UnauthorizedError") return res.customSend("身份认证失败！");
   // 未知错误
   res.customSend(err);
 });
-
-const userRouter = require("./router/user");
-app.use("/api", userRouter);
 
 app.listen(3007, () => {
   console.log("api server is running at http://127.0.0.1:3007");

@@ -14,7 +14,7 @@ const { regUser, login } = userHandle;
 router.post("/reguser", expressJoi(reg_login_schema), regUser);
 
 // 登录
-router.post("/login", login);
+router.post("/login", expressJoi(reg_login_schema), login);
 
 // 将路由对象共享出去
 module.exports = router;
